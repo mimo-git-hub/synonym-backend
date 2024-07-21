@@ -40,8 +40,8 @@ public class SynmsServiceImpl implements SynmsService {
 			return null;
 		}
 		
-		Long syns1 = wordRepository.findByWordName(map.getSynonym1());
-		Long syns2 = wordRepository.findByWordName(map.getSynonym2());
+		Long syns1 = wordRepository.findByWordName(map.getSynonym1().toUpperCase());
+		Long syns2 = wordRepository.findByWordName(map.getSynonym2().toUpperCase());
 		
 		if(syns1 != null && syns2 != null) {
 			for(Synms syn : synmsRepository.findAll()) {
@@ -67,7 +67,7 @@ public class SynmsServiceImpl implements SynmsService {
 
 	@Override
 	public synchronized List<String> getSynonymByWord(String word) {
-		Long id = wordRepository.findByWordName(word); //get id of word since synonyms are mapped with word id's for better db performance
+		Long id = wordRepository.findByWordName(word.toUpperCase()); //get id of word since synonyms are mapped with word id's for better db performance
 		List<Long> result = findByWordId(id); //get direct synonyms for input word
 		//Transitive rule implementation
 		if(!result.isEmpty()) { //in case of no result app will skip additional logic

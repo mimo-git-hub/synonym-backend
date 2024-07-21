@@ -10,6 +10,6 @@ import com.reeinvent.synonym.model.Word;
 @Repository
 public interface WordRepository extends JpaRepository<Word, Long>{
 	
-	@Query(value = "SELECT id FROM words WHERE name = ?1", nativeQuery = true)
+	@Query(value = "SELECT id FROM words WHERE UPPER(name) = ?1", nativeQuery = true)
 	Long findByWordName(String name);
 }
