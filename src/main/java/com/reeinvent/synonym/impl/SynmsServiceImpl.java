@@ -32,18 +32,21 @@ public class SynmsServiceImpl implements SynmsService {
 	public List<Long> findByWordId(Long id) {
 		return synmsRepository.findByWordId(id);
 	}
-
+	
+	/*
+	 * Synonyms are stored in two tables. One table holds just words with unique id respectively and other hold map of id's of words.
+	 */
 	@Override
-	public synchronized SynonymMap createSynms(SynonymMap map) {
+	public synchronized SynonymMap createSynms(SynonymMap map) {//synchronized are added to api's to implement Thread safety
 		
-		if(map.getSynonym1().toUpperCase().equals(map.getSynonym2().toUpperCase())) {
+		if(map.getSynonym1().toUpperCase().equals(map.getSynonym2().toUpperCase())) {//in case of same words app will not save result
 			return null;
 		}
 		
-		Long syns1 = wordRepository.findByWordName(map.getSynonym1().toUpperCase());
+		Long syns1 = wordRepository.findByWordName(map.getSynonym1().toUpperCase());//fetch id's of words
 		Long syns2 = wordRepository.findByWordName(map.getSynonym2().toUpperCase());
 		
-		if(syns1 != null && syns2 != null) {
+		if(syns1 != null && syns2 != null) {//check if there is already combination of input synonyms, if yes, app will not save result to avoid duplicate records
 			for(Synms syn : synmsRepository.findAll()) {
 				if(syns1.equals(syn.getSyns1()) && syns2.equals(syn.getSyns2())
 						|| syns1.equals(syn.getSyns2()) && syns2.equals(syn.getSyns1())) {
@@ -52,7 +55,7 @@ public class SynmsServiceImpl implements SynmsService {
 			}
 		}
 		
-		if(syns1 == null) {
+		if(syns1 == null) {//this part of code check if one of words al already present in db. If not it creates record of that word
 			syns1 = wordRepository.save(new Word(null, map.getSynonym1())).getId();
 		}
 		if(syns2 == null) {
@@ -76,6 +79,7 @@ public class SynmsServiceImpl implements SynmsService {
 			List<Long> resultTemp = new ArrayList<Long>(); // list for new results
 			List<Long> resultLoop = result; //list for looping through items, this list prevents infinite loop
 			
+			//this part of code fetch synonyms of synonyms of input word
 			while(resultLoop.size() > 0) { //search of Transitive sysnonyms
 				for(Long res : resultLoop) {
 					for(Synms mapLoop : map) {
@@ -100,6 +104,7 @@ public class SynmsServiceImpl implements SynmsService {
 		
 	}
 	
+	//this part of code check if a id of word exist in given synonym map 
 	private boolean func(Synms map, Long exclude) {
 		if(exclude.equals(map.getSyns1()) || exclude.equals(map.getSyns2())) {
 			return false;
