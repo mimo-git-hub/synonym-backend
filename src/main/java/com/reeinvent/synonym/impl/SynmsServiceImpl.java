@@ -37,7 +37,7 @@ public class SynmsServiceImpl implements SynmsService {
 	public synchronized SynonymMap createSynms(SynonymMap map) {
 		
 		if(map.getSynonym1().toUpperCase().equals(map.getSynonym2().toUpperCase())) {
-			return map;
+			return null;
 		}
 		
 		Long syns1 = wordRepository.findByWordName(map.getSynonym1());
@@ -47,7 +47,7 @@ public class SynmsServiceImpl implements SynmsService {
 			for(Synms syn : synmsRepository.findAll()) {
 				if(syns1.equals(syn.getSyns1()) && syns2.equals(syn.getSyns2())
 						|| syns1.equals(syn.getSyns2()) && syns2.equals(syn.getSyns1())) {
-					return map;
+					return null;
 				}
 			}
 		}
@@ -67,16 +67,16 @@ public class SynmsServiceImpl implements SynmsService {
 
 	@Override
 	public synchronized List<String> getSynonymByWord(String word) {
-		Long id = wordRepository.findByWordName(word);
-		List<Long> result = findByWordId(id);
-		
+		Long id = wordRepository.findByWordName(word); //get id of word since synonyms are mapped with word id's for better db performance
+		List<Long> result = findByWordId(id); //get direct synonyms for input word
+		//Transitive rule implementation
 		if(!result.isEmpty()) { //in case of no result app will skip additional logic
-			List<Synms> map = synmsRepository.findAll(); //Map of All Synonyms
+			List<Synms> map = synmsRepository.findAll();  
 			map = map.stream().filter(i -> func(i, id)).collect(Collectors.toList()); //reduce map for already searched synonyms
 			List<Long> resultTemp = new ArrayList<Long>(); // list for new results
-			List<Long> resultLoop = result; //list for looping through items
+			List<Long> resultLoop = result; //list for looping through items, this list prevents infinite loop
 			
-			while(resultLoop.size() > 0) {
+			while(resultLoop.size() > 0) { //search of Transitive sysnonyms
 				for(Long res : resultLoop) {
 					for(Synms mapLoop : map) {
 						if(!func(mapLoop, res)) {
@@ -94,9 +94,9 @@ public class SynmsServiceImpl implements SynmsService {
 			}
 		}
 		
-		Map<Long, String> wordsMap = wordRepository.findAll().stream().collect(Collectors.toMap(Word::getId, Word::getName));
+		Map<Long, String> wordsMap = wordRepository.findAll().stream().collect(Collectors.toMap(Word::getId, Word::getName));//fetch map of words and id's
 				
-		return result.stream().collect(Collectors.mapping(i -> wordsMap.get(i), Collectors.toList()));
+		return result.stream().collect(Collectors.mapping(i -> wordsMap.get(i), Collectors.toList())); //return words as strings
 		
 	}
 	
